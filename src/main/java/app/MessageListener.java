@@ -1,6 +1,7 @@
 package app;
 
 import app.objects.Command;
+import app.web.WebParserForLexicons;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +45,7 @@ public class MessageListener extends ListenerAdapter {
         //return list of commands
         if (event.getMessage().getContentRaw().equals("!commands")) {
             //createMessageWithCommandsList(event);
-            test(event);
+            createMessageWithCommands(event);
         }
 
         //return ip
@@ -52,30 +53,22 @@ public class MessageListener extends ListenerAdapter {
             createMessageWithIp(event);
         }
 
+        //return trash phrase
+        else if (event.getMessage().getContentRaw().equals("!trash.ukr")) {
+            createMessageWithTrashMessage(event);
+        }
     }
 
     @Override
     public void onGuildVoiceJoin(@Nonnull GuildVoiceJoinEvent event) {
-        if (event.getMember().getUser().getName().equals(VYCHIK_NAME) || event.getMember().getUser().getName().equals(DARIAN_NAME)) {
+        if (event.getMember().getUser().getName().equals(VYCHIK_NAME) ||
+                event.getMember().getUser().getName().equals(DARIAN_NAME)) {
             Objects.requireNonNull(event.getGuild().getDefaultChannel())
                     .sendMessage("Черт " + event.getMember().getUser().getAsMention() + " нарисовался").queue();
         }
     }
 
-    private void createMessageWithCommandsList(MessageReceivedEvent event) {
-        Commands[] cmds = Commands.values();
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("bot commands:");
-
-        for (Commands c : cmds) {
-            sb.append("!").append(c).append("\n");
-        }
-
-        event.getChannel().sendMessage(sb.toString()).queue();
-    }
-
-    private void test(MessageReceivedEvent event) {
+    private void createMessageWithCommands(MessageReceivedEvent event) {
         File file = new File("src/main/resources/commands.json");
 
         ObjectMapper mapper = new ObjectMapper();
@@ -95,14 +88,11 @@ public class MessageListener extends ListenerAdapter {
             sb.append("yaml");
             sb.append("\n");
 
-            for (Command c : commands
-            ) {
+            for (Command c : commands) {
                 sb.append(c.getCommand()).append(" - ").append(c.getDescription()).append("\n");
             }
 
             sb.append("```");
-
-            //System.out.println(sb.toString());
 
             event.getChannel().sendMessage(sb.toString()).queue();
 
@@ -117,9 +107,9 @@ public class MessageListener extends ListenerAdapter {
             //take ip of this pc by amazon service
             String ip = Utils.getIp();
 
-            int random_int = new Random().nextInt(3);
+            int randomInt = new Random().nextInt(3);
 
-            switch (random_int) {
+            switch (randomInt) {
                 case 0:
                     event.getChannel().sendMessage(
                             "Мадиииина, ip хочешь, да? Ну ладно, держи, солнышко: "
@@ -142,9 +132,12 @@ public class MessageListener extends ListenerAdapter {
         }
     }
 
-    private enum Commands {
-        Ip,
-        Commands,
+    private void createMessageWithTrashMessage(MessageReceivedEvent event) {
+        WebParserForLexicons wpl = new WebParserForLexicons();
+        wpl.connect();
+
+        //send message in text chat
+        event.getChannel().sendMessage(wpl.parse()).queue();
     }
 
 }
